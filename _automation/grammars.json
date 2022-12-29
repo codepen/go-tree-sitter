@@ -42,6 +42,13 @@
     "revision": "61843e3beebf19417e4fede4e8be4df1084317ad"
   },
   {
+    "language": "dart",
+    "url": "https://github.com/UserNobody14/tree-sitter-dart",
+    "files": ["parser.c", "scanner.c", "binding.cc"],
+    "reference": "master",
+    "revision": "53485a8f301254e19c518aa20c80f1bcf7cf5c62"
+  },
+  {
     "language": "dockerfile",
     "url": "https://github.com/camdencheek/tree-sitter-dockerfile",
     "files": ["parser.c"],
@@ -94,8 +101,15 @@
     "language": "javascript",
     "url": "https://github.com/tree-sitter/tree-sitter-javascript",
     "files": ["parser.c", "scanner.c"],
-    "reference": "v0.19.0",
-    "revision": "efd8cc9ee8eb919c2ca0f0eebaeb8f39557d8a8a"
+    "reference": "master",
+    "revision": "7a29d06274b7cf87d643212a433d970b73969016"
+  },
+  {
+    "language": "json",
+    "url": "https://github.com/tree-sitter/tree-sitter-json/",
+    "files": ["parser.c"],
+    "reference": "master",
+    "revision": "73076754005a460947cafe8e03a8cf5fa4fa2938"
   },
   {
     "language": "kotlin",
@@ -108,6 +122,13 @@
     "language": "lua",
     "url": "https://github.com/tjdevries/tree-sitter-lua",
     "files": ["parser.c", "scanner.c"],
+    "reference": "master",
+    "revision": "0e860f697901c9b610104eb61d3812755d5211fc"
+  },
+  {
+    "language": "markdown",
+    "url": "https://github.com/ikatyang/tree-sitter-markdown",
+    "files": ["parser.c", "scanner.cc"],
     "reference": "master",
     "revision": "0e860f697901c9b610104eb61d3812755d5211fc"
   },
@@ -195,6 +216,13 @@
     "files": ["parser.c", "scanner.c"],
     "reference": "v0.20.2",
     "revision": "5d20856f34315b068c41edaee2ac8a100081d259"
+  },
+  {
+    "language": "vue",
+    "url": "https://github.com/ikatyang/tree-sitter-vue",
+    "files": ["parser.c", "scanner.cc"],
+    "reference": "master",
+    "revision": "91fe2754796cd8fba5f229505a23fa08f3546c06"
   },
   {
     "language": "yaml",
