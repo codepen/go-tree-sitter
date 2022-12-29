@@ -280,6 +280,8 @@ struct Scanner {
 
 }
 
+// Commented out due to conflict with HTML grammar
+// Error: duplicate symbol '_tree_sitter_html_external_scanner_destroy' in:
 // extern "C" {
 
 // void *tree_sitter_html_external_scanner_create() {
