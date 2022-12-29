@@ -44,7 +44,7 @@
   {
     "language": "dart",
     "url": "https://github.com/UserNobody14/tree-sitter-dart",
-    "files": ["parser.c", "scanner.c", "binding.cc"],
+    "files": ["parser.c", "scanner.c"],
     "reference": "master",
     "revision": "53485a8f301254e19c518aa20c80f1bcf7cf5c62"
   },
