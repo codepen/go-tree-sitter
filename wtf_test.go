@@ -2,7 +2,6 @@ package sitter
 
 import (
 	"log"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,8 +13,7 @@ var input = `
 // the sound of water
 `
 
-func evalQuery(t *testing.T, query string) {
-
+func evalQuery(query string) int {
 	parser := NewParser()
 	grammar := getTestGrammar()
 	parser.SetLanguage(grammar)
@@ -26,68 +24,73 @@ func evalQuery(t *testing.T, query string) {
 
 	q, err := NewQuery([]byte(query), grammar)
 	if err != nil {
-		assert.FailNow(t, "Failed to parse query", err)
+		log.Panic("Failed to parse query", err)
 	}
 
 	qc := NewQueryCursor()
 	qc.Exec(q, root)
 
-	nMatches := 0
-	nPass := 0
+	actual := 0
 
 	for {
 		match, ok := qc.NextMatch()
-
 		if !ok {
 			break
 		}
 
-		nMatches++
-		isMatch := true
-
-		// Enable / disable predicate check
-		if true {
+		// Change to `true` to enable predicate check (doesn't affect number of
+		// matches, however)
+		if false {
 			filteredMatch := qc.FilterPredicates(match, []byte(input))
-			isMatch = len(filteredMatch.Captures) > 0
+			isMatch := len(filteredMatch.Captures) > 0
+			if !isMatch {
+				continue
+			}
 		}
 
-		if isMatch {
-			nPass++
-		}
+		actual++
 	}
 
-	log.Printf(`query = "%s"
-
-Predicates passed %d of %d matches
-======
-`,
-		strings.TrimSpace(query),
-		nPass,
-		nMatches,
-	)
+	return actual
 }
 
 func TestWTF(t *testing.T) {
-	tests := []string{
-		`
-(expression (comment) @foo
-	(#match? @foo "^// the")
-)
-		`,
-		`
-(expression (comment) @foo)
-(#match? @foo "^// the")
-		`,
-		`
-(expression (comment) @foo)
-(#match? @foo "^// the")
-(#match? @foo "water$")
-		`,
-	}
-
 	log.Printf("input = \"%s\"", input)
 
-	for _, test := range tests {
-		evalQuery(t, test)
-	}
+	assert.Equal( // PASSES
+		t,
+		3,
+		evalQuery(`
+		(expression (comment) @foo)
+	`),
+	)
+
+	assert.Equal( // FAILS
+		t,
+		2,
+		evalQuery(`
+		(expression (comment) @foo
+			(#match? @foo "^// the")
+		)
+	`),
+	)
+
+	assert.Equal( // FAILS
+		t,
+		2,
+		evalQuery(`
+			(expression (comment) @foo)
+			(#match? @foo "^// the")
+		`),
+	)
+
+	assert.Equal( // FAILS
+		t,
+		1,
+		evalQuery(`
+			(expression (comment) @foo)
+				(#match? @foo "^// the")
+				(#match? @foo "water$")
+		`),
+	)
 }
