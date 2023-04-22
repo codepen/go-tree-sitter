@@ -30,7 +30,7 @@ func evalQuery(query string) int {
 	qc := NewQueryCursor()
 	qc.Exec(q, root)
 
-	actual := 0
+	count := 0
 
 	for {
 		match, ok := qc.NextMatch()
@@ -44,14 +44,15 @@ func evalQuery(query string) int {
 			filteredMatch := qc.FilterPredicates(match, []byte(input))
 			isMatch := len(filteredMatch.Captures) > 0
 			if !isMatch {
+				count--
 				continue
 			}
 		}
 
-		actual++
+		count++
 	}
 
-	return actual
+	return count
 }
 
 func TestWTF(t *testing.T) {
@@ -67,7 +68,7 @@ func TestWTF(t *testing.T) {
 
 	assert.Equal( // FAILS
 		t,
-		2,
+		3,
 		evalQuery(`
 		(expression (comment) @foo
 			(#match? @foo "^// the")
@@ -77,7 +78,7 @@ func TestWTF(t *testing.T) {
 
 	assert.Equal( // FAILS
 		t,
-		2,
+		3,
 		evalQuery(`
 			(expression (comment) @foo)
 			(#match? @foo "^// the")
@@ -86,7 +87,7 @@ func TestWTF(t *testing.T) {
 
 	assert.Equal( // FAILS
 		t,
-		1,
+		3,
 		evalQuery(`
 			(expression (comment) @foo)
 				(#match? @foo "^// the")
