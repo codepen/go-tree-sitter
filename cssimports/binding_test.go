@@ -15,7 +15,7 @@ func TestCssImportsGrammar(t *testing.T) {
 	n, err := sitter.ParseCtx(context.Background(), []byte("@import \"hello\";"), cssimports.GetLanguage())
 	assert.NoError(err)
 	assert.Equal(
-		"(doc (import_statement (quoted_import_reference (import_reference))))",
+		"(doc (import_statement (import_reference)))",
 		n.String(),
 	)
 }
