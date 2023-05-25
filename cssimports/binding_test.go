@@ -1,18 +1,18 @@
-package stylus_test
+package cssimports_test
 
 import (
 	"context"
 	"testing"
 
 	sitter "github.com/codepen/go-tree-sitter"
-	"github.com/codepen/go-tree-sitter/stylus"
+	"github.com/codepen/go-tree-sitter/cssimports"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStylusGrammar(t *testing.T) {
+func TestCssImportsGrammar(t *testing.T) {
 	assert := assert.New(t)
 
-	n, err := sitter.ParseCtx(context.Background(), []byte("@import \"hello\";"), stylus.GetLanguage())
+	n, err := sitter.ParseCtx(context.Background(), []byte("@import \"hello\";"), cssimports.GetLanguage())
 	assert.NoError(err)
 	assert.Equal(
 		"(doc (import_statement (quoted_import_reference (import_reference))))",
