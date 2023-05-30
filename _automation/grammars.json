@@ -290,29 +290,19 @@
     "files": [
       "parser.c",
       "scanner.c",
-      "stack.h"
+      "stack.h∑"
     ],
     "reference": "v0.19.1",
     "revision": "918f0fb948405181707a1772cab639f2d278d384"
   },
   {
-    "language": "scss",
-    "url": "https://github.com/serenadeai/tree-sitter-scss",
-    "files": [
-      "parser.c",
-      "scanner.c"
-    ],
-    "reference": "v1.0.0",
-    "revision": "c478c6868648eff49eb04a4df90d703dc45b312a"
-  },
-  {
-    "language": "stylus",
+    "language": "cpcss",
     "url": "https://github.com/codepen/tree-sitter-stylus",
     "files": [
       "parser.c"
     ],
     "reference": "master",
-    "revision": "0e0e63d7a2a3d040be51fb031f0b9948149063a8"
+    "revision": "9944e8241da74a2be0aeb9b491e924f488f61451"
   },
   {
     "language": "svelte",
