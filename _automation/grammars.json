@@ -305,13 +305,13 @@
     "revision": "918f0fb948405181707a1772cab639f2d278d384"
   },
   {
-    "language": "cssimports",
+    "language": "cpcss",
     "url": "https://github.com/codepen/tree-sitter-stylus",
     "files": [
       "parser.c"
     ],
-    "reference": "cssimports",
-    "revision": "18805136bf7ee69d859379eb5244a36432116bdc"
+    "reference": "master",
+    "revision": "fd706450f0440ca2b4699224406511f852a0c497"
   },
   {
     "language": "svelte",

@@ -1,7 +1,7 @@
-package cssimports
+package cpcss
 
 //#include "parser.h"
-//TSLanguage *tree_sitter_cssimports();
+//TSLanguage *tree_sitter_cpcss();
 import "C"
 
 import (
@@ -11,6 +11,6 @@ import (
 )
 
 func GetLanguage() *sitter.Language {
-	ptr := unsafe.Pointer(C.tree_sitter_cssimports())
+	ptr := unsafe.Pointer(C.tree_sitter_cpcss())
 	return sitter.NewLanguage(ptr)
 }
