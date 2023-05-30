@@ -166,15 +166,6 @@
     "revision": "100d79fd96b56a1b99099a8d2f3c114b8687acfb"
   },
   {
-    "language": "less",
-    "url": "https://github.com/codepen/tree-sitter-less",
-    "files": [
-      "parser.c"
-    ],
-    "reference": "master",
-    "revision": "fcd5b67b2979e8aa27bd12bbd39ae9435cc507eb"
-  },
-  {
     "language": "lua",
     "url": "https://github.com/tjdevries/tree-sitter-lua",
     "files": [
