@@ -1,0 +1,8 @@
+{
+  "search.exclude": {
+    "**/*.c": true,
+    "**/*.cc": true,
+    "**/*.h": true,
+    "**/bower_components": false
+  }
+}
