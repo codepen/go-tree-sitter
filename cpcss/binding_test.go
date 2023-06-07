@@ -12,10 +12,10 @@ import (
 func TestCPCssImportsGrammar(t *testing.T) {
 	assert := assert.New(t)
 
-	n, err := sitter.ParseCtx(context.Background(), []byte("@import \"hello\";"), cpcss.GetLanguage())
+	n, err := sitter.ParseCtx(context.Background(), []byte("url(foo/bar);\n@import \"hello\";"), cpcss.GetLanguage())
 	assert.NoError(err)
 	assert.Equal(
-		"(doc (import_statement (import_reference)))",
+		"(doc (url (import_reference)) (import_statement (import_reference)))",
 		n.String(),
 	)
 }
