@@ -15,7 +15,7 @@ func TestCPCssImportsGrammar(t *testing.T) {
 	n, err := sitter.ParseCtx(context.Background(), []byte("url(foo/bar);\n@import \"hello\";"), cpcss.GetLanguage())
 	assert.NoError(err)
 	assert.Equal(
-		"(doc (url (import_reference)) (import_statement (import_reference)))",
+		"(doc (url (reference)) (import_statement (reference)))",
 		n.String(),
 	)
 }
