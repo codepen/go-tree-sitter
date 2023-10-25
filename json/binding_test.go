@@ -1,10 +1,11 @@
-package json
+package json_test
 
 import (
 	"context"
 	"testing"
 
 	sitter "github.com/codepen/go-tree-sitter"
+	"github.com/codepen/go-tree-sitter/json"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +32,7 @@ func TestGrammar(t *testing.T) {
 	}
 	`
 
-	n, err := sitter.ParseCtx(context.Background(), []byte(code), GetLanguage())
+	n, err := sitter.ParseCtx(context.Background(), []byte(code), json.GetLanguage())
 	assert.NoError(err)
 	assert.Equal(
 		"(document (object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (object (pair key: (string (string_content)) value: (string (string_content))))) (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (object (pair key: (string (string_content)) value: (string (string_content))))) (pair key: (string (string_content)) value: (object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (string (string_content))))) (pair key: (string (string_content)) value: (true))))",
