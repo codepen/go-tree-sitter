@@ -4,10 +4,10 @@
     "url": "https://github.com/tree-sitter/tree-sitter-bash",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
-    "reference": "v0.19.0",
-    "revision": "b6667bed364733c8a8f8e5973749f86cfa04ba2a"
+    "reference": "v0.20.4",
+    "revision": "1479a4030f1a399c253aee02097576d4af46f23a"
   },
   {
     "language": "c",
@@ -15,8 +15,8 @@
     "files": [
       "parser.c"
     ],
-    "reference": "v0.20.2",
-    "revision": "7175a6dd5fc1cee660dce6fe23f6043d75af424a"
+    "reference": "v0.20.6",
+    "revision": "a2b7bac3b313efbaa683d9a276ff63cdc544d960"
   },
   {
     "language": "csharp",
@@ -33,10 +33,10 @@
     "url": "https://github.com/tree-sitter/tree-sitter-cpp",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
-    "reference": "v0.20.0",
-    "revision": "f44509141e7e483323d2ec178f2d2e6c0fc041c1"
+    "reference": "v0.20.3",
+    "revision": "ab1065fa23a43a447bd7e619a3af90253867af24"
   },
   {
     "language": "css",
@@ -45,8 +45,8 @@
       "parser.c",
       "scanner.c"
     ],
-    "reference": "v0.19.0",
-    "revision": "9668e889161358d18a558f68f1614b6edde34029"
+    "reference": "v0.20.0",
+    "revision": "98c7b3dceb24f1ee17f1322f3947e55638251c37"
   },
   {
     "language": "cue",
@@ -56,7 +56,7 @@
       "scanner.c"
     ],
     "reference": "main",
-    "revision": "f83fd9abbece9becb5232c517b9d47ff141e237a"
+    "revision": "2df92e6755337e9234ad18ffef37f35d95e2ba9d"
   },
   {
     "language": "dart",
@@ -66,7 +66,7 @@
       "scanner.c"
     ],
     "reference": "master",
-    "revision": "939e5e18321a695f39889ae9dcf3c0255a107109"
+    "revision": "f71e310a93010863f4b17a2a501ea8e2032c345b"
   },
   {
     "language": "dockerfile",
@@ -82,20 +82,20 @@
     "url": "https://github.com/elixir-lang/tree-sitter-elixir",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
-    "reference": "v0.1.0",
-    "revision": "869dff3ceb8823ca4b17ca33b663667c8e41e8ba"
+    "reference": "v0.1.1",
+    "revision": "11426c5fd20eef360d5ecaf10729191f6bc5d715"
   },
   {
     "language": "elm",
     "url": "https://github.com/elm-tooling/tree-sitter-elm",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
-    "reference": "v5.6.4",
-    "revision": "692c50c0b961364c40299e73c1306aecb5d20f40"
+    "reference": "v5.7.0",
+    "revision": "c26afd7f2316f689410a1622f1780eff054994b1"
   },
   {
     "language": "golang",
@@ -104,28 +104,28 @@
       "parser.c"
     ],
     "reference": "master",
-    "revision": "64457ea6b73ef5422ed1687178d4545c3e91334a"
+    "revision": "ff86c7f1734873c8c4874ca4dd95603695686d7a"
   },
   {
     "language": "hcl",
-    "url": "https://github.com/mitchellh/tree-sitter-hcl",
+    "url": "https://github.com/MichaHoffmann/tree-sitter-hcl",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
     "reference": "main",
-    "revision": "bdc2ee0cbd19d22f8a1529e5c9d099029573c931"
+    "revision": "e135399cb31b95fac0760b094556d1d5ce84acf0"
   },
   {
     "language": "html",
-    "url": "https://github.com/codepen/tree-sitter-html",
+    "url": "https://github.com/tree-sitter/tree-sitter-html",
     "files": [
       "parser.c",
       "scanner.cc",
       "tag.h"
     ],
-    "reference": "master",
-    "revision": "ad51e526648e73fdd49c782c06d6177819c5b17e"
+    "reference": "v0.19.0",
+    "revision": "d93af487cc75120c89257195e6be46c999c6ba18"
   },
   {
     "language": "java",
@@ -133,8 +133,8 @@
     "files": [
       "parser.c"
     ],
-    "reference": "v0.20.1",
-    "revision": "09d650def6cdf7f479f4b78f595e9ef5b58ce31e"
+    "reference": "v0.20.2",
+    "revision": "2b57cd9541f9fd3a89207d054ce8fbe72657c444"
   },
   {
     "language": "javascript",
@@ -143,8 +143,8 @@
       "parser.c",
       "scanner.c"
     ],
-    "reference": "master",
-    "revision": "5720b249490b3c17245ba772f6be4a43edb4e3b7"
+    "reference": "v0.20.1",
+    "revision": "f1e5a09b8d02f8209a68249c93f0ad647b228e6e"
   },
   {
     "language": "json",
@@ -163,7 +163,7 @@
       "scanner.c"
     ],
     "reference": "main",
-    "revision": "100d79fd96b56a1b99099a8d2f3c114b8687acfb"
+    "revision": "0ef87892401bb01c84b40916e1f150197bc134b1"
   },
   {
     "language": "lua",
@@ -173,7 +173,7 @@
       "scanner.c"
     ],
     "reference": "master",
-    "revision": "4bd6dc030b2221d37f2183a6ae14417b6d6627a1"
+    "revision": "155ed2fc3c8ed498987d17e221b53fdabedb753d"
   },
   {
     "language": "markdown",
@@ -217,23 +217,19 @@
   {
     "language": "ocaml",
     "url": "https://github.com/tree-sitter/tree-sitter-ocaml",
-    "files": [
-      "parser.c",
-      "scanner.cc",
-      "scanner.h"
-    ],
-    "reference": "v0.20.1",
-    "revision": "de07323343946c32759933cb3b7c78e821098cad"
+    "files": [],
+    "reference": "v0.20.4",
+    "revision": "694c57718fd85d514f8b81176038e7a4cfabcaaf"
   },
   {
     "language": "php",
     "url": "https://github.com/tree-sitter/tree-sitter-php",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
-    "reference": "v0.19.0",
-    "revision": "3ef0d5c253affe4b7fb46d9505db6df143db565a"
+    "reference": "v0.20.0",
+    "revision": "0a99deca13c4af1fb9adcb03c958bfc9f4c740a9"
   },
   {
     "language": "protobuf",
@@ -259,10 +255,10 @@
     "url": "https://github.com/tree-sitter/tree-sitter-python",
     "files": [
       "parser.c",
-      "scanner.cc"
+      "scanner.c"
     ],
-    "reference": "v0.20.0",
-    "revision": "2b9e9e0d231d5dd9f491d47f704817baee7d5af0"
+    "reference": "v0.20.4",
+    "revision": "c01fb4e38587e959b9058b8cd34b9e6a3068c827"
   },
   {
     "language": "ruby",
@@ -281,8 +277,8 @@
       "parser.c",
       "scanner.c"
     ],
-    "reference": "v0.20.3",
-    "revision": "0431a2c60828731f27491ee9fdefe25e250ce9c9"
+    "reference": "v0.20.4",
+    "revision": "afb6000a71fb9dff3f47f90d412ec080ae12bbb4"
   },
   {
     "language": "scala",
@@ -290,10 +286,10 @@
     "files": [
       "parser.c",
       "scanner.c",
-      "stack.h∑"
+      "stack.h"
     ],
-    "reference": "v0.19.1",
-    "revision": "918f0fb948405181707a1772cab639f2d278d384"
+    "reference": "v0.20.2",
+    "revision": "d50b6ca5cc3d925e3d1f497199cb8d8383ddae8a"
   },
   {
     "language": "cpcss",
@@ -336,8 +332,8 @@
       "parser.c",
       "scanner.c"
     ],
-    "reference": "v0.20.2",
-    "revision": "5d20856f34315b068c41edaee2ac8a100081d259"
+    "reference": "v0.20.3",
+    "revision": "c604297f8197b468026f2ea32119935887e01c67"
   },
   {
     "language": "vue",

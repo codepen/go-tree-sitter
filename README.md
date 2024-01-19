@@ -51,6 +51,7 @@ Known external grammars:
 
 - [Salesforce grammars](https://github.com/aheber/tree-sitter-sfapex) - including Apex, SOQL, and SOSL languages.
 - [Ruby](https://github.com/shagabutdinov/go-tree-sitter-ruby) - Deprecated, grammar is provided by main repo instead
+- [Go Template](https://github.com/mrjosh/helm-ls/tree/master/internal/tree-sitter/gotemplate) - Used for helm
 
 ### Editing
 
@@ -149,7 +150,7 @@ Update vendor files:
 
 - open `_automation/grammars.json`
 - modify `reference` (for tagged grammars) or `revision` (for grammars from a branch)
-- run `c <grammar-name>`
+- run `go run _automation/main.go update <grammar-name>`
 
 It is also possible to update all grammars in one go using
 
