@@ -5,14 +5,98 @@
 
 Golang bindings for [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 
+## How to Update Pug Grammar
+
+### 1. Update Automation Grammars Configuration File
+Update the grammar to the `codepen/go-tree-sitter/_automation/grammars.json` file. The format is:
+
+```json
+{
+"language": "pug",
+"url": "https://github.com/codepen/tree-sitter-pug",
+"files": ["parser.c", "scanner.cc"],
+"reference": "master",
+"revision": "757e95a5fbf26058e38f9beb1fd2f05c140410a7"
+},
+```
+
+### 2. Run Script to Update Grammar
+
+This will pull the latest generated C parser files from the GitHub repo.
+
+```bash
+go run _automation/main.go update pug -force
+```
+
+### 3. Add Go Binding
+
+Manually add a file called `binding.go` to the `codepen/go-tree-sitter/pug` directory. This file should contain the following code, specific to your grammar:
+
+```go
+package pug
+
+//#include "parser.h"
+//TSLanguage *tree_sitter_pug();
+import "C"
+
+import (
+	"unsafe"
+
+	sitter "github.com/codepen/go-tree-sitter"
+)
+
+func GetLanguage() *sitter.Language {
+	ptr := unsafe.Pointer(C.tree_sitter_pug())
+	return sitter.NewLanguage(ptr)
+}
+```
+
+This logic adds a `GetLanguage` method that allows you to call the underlying C code from Go.
+
+Be sure to set the correct language name in two places in this file:
+Line 4: `//TSLanguage *tree_sitter_<language>();`
+Line 14: `ptr := unsafe.Pointer(C.tree_sitter_<language>())`
+
+### 4. Add Binding Test
+Test the syntax tree your newly added parser generates by creating a test file in the `codepen/go-tree-sitter/<language>` directory. This file should contain the following code, specific to your grammar:
+
+```go
+package pug_test
+
+import (
+	"context"
+	"testing"
+
+	sitter "github.com/codepen/go-tree-sitter"
+	"github.com/codepen/go-tree-sitter/pug"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestGrammar(t *testing.T) {
+	assert := assert.New(t)
+
+	n, err := sitter.ParseCtx(context.Background(), []byte(`extends layout.pug`), pug.GetLanguage())
+	assert.NoError(err)
+	assert.Equal("(source_file (extends_statement (path)))", n.String())
+}
+```
+
+Run the test from the root of the repo with the following command:
+```bash
+go test -v pug/binding_test.go
+```
+
 ## Usage
 
 Create a parser with a grammar:
 
 ```go
 import (
-	sitter "github.com/codepen/go-tree-sitter"
-	"github.com/codepen/go-tree-sitter/javascript"
+	"context"
+	"fmt"
+
+	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/smacker/go-tree-sitter/javascript"
 )
 
 parser := sitter.NewParser()
@@ -23,7 +107,7 @@ Parse some code:
 
 ```go
 sourceCode := []byte("let a = 1")
-tree := parser.Parse(nil, sourceCode)
+tree, _ := parser.ParseCtx(context.Background(), nil, sourceCode)
 ```
 
 Inspect the syntax tree:
@@ -51,6 +135,7 @@ Known external grammars:
 
 - [Salesforce grammars](https://github.com/aheber/tree-sitter-sfapex) - including Apex, SOQL, and SOSL languages.
 - [Ruby](https://github.com/shagabutdinov/go-tree-sitter-ruby) - Deprecated, grammar is provided by main repo instead
+- [Go Template](https://github.com/mrjosh/helm-ls/tree/master/internal/tree-sitter/gotemplate) - Used for helm
 
 ### Editing
 
@@ -149,7 +234,7 @@ Update vendor files:
 
 - open `_automation/grammars.json`
 - modify `reference` (for tagged grammars) or `revision` (for grammars from a branch)
-- run `c <grammar-name>`
+- run `go run _automation/main.go update <grammar-name>`
 
 It is also possible to update all grammars in one go using
 
