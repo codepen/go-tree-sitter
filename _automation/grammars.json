@@ -344,8 +344,8 @@
       "scanner.c"
     ],
     "reference": "v0.3.2",
-    "revision": "1c8dea73bc0c996d92dd9ebc30dd388716b1c5db",
-    "updateBasedOn": "tag"
+    "revision": "",
+    "updateBasedOn": "commit"
   },
   {
     "language": "sql",

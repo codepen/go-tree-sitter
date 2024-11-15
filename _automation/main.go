@@ -463,18 +463,27 @@ func (s *UpdateService) downloadMarkdown(ctx context.Context, g *Grammar) {
 	langs := []string{"tree-sitter-markdown", "tree-sitter-markdown-inline"}
 	for _, lang := range langs {
 		s.makeDir(ctx, fmt.Sprintf("%s/%s", g.Language, lang))
+		downloadFileURL := getMarkdownURL(url, g.Reference, lang, "parser.c")
 
 		s.downloadFile(
 			ctx,
-			fmt.Sprintf("%s/%s/%s/src/tree_sitter/parser.h", url, g.Revision, lang),
-			fmt.Sprintf("%s/%s/parser.h", g.Language, lang),
+			downloadFileURL,
+			fmt.Sprintf("%s/%s/parser.c", g.Language, lang),
+			nil,
+		)
+
+		s.downloadFile(
+			ctx,
+			getMarkdownURL(url, g.Reference, lang, "scanner.c"),
+			fmt.Sprintf("%s/%s/scanner.c", g.Language, lang),
 			nil,
 		)
 
 		for _, f := range g.Files {
+			fmt.Println("files filepath:", getMarkdownURL(url, g.Reference, lang, f))
 			s.downloadFile(
 				ctx,
-				fmt.Sprintf("%s/%s/%s/src/%s", url, g.Revision, lang, f),
+				getMarkdownURL(url, g.Reference, lang, f),
 				fmt.Sprintf("%s/%s/%s", g.Language, lang, f),
 				map[string]string{
 					`"tree_sitter/parser.h"`: `"parser.h"`,
@@ -482,6 +491,21 @@ func (s *UpdateService) downloadMarkdown(ctx context.Context, g *Grammar) {
 			)
 		}
 	}
+}
+
+func getMarkdownURL(url string, tag string, lang string, filename string) string {
+	//
+	// https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/refs/tags/v0.3.2/tree-sitter-markdown/src/parser.h
+	//
+	// Good URL:
+	// https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/refs/tags/v0.3.2/tree-sitter-markdown/src/parser.c
+	return fmt.Sprintf(
+		"%s/refs/tags/%s/%s/src/%s",
+		url,
+		tag,
+		lang,
+		filename,
+	)
 }
 
 // for yaml grammar scanner.cc includes schema.generated.cc file
