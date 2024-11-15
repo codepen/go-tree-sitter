@@ -14,6 +14,10 @@ type MarkdownTree struct {
 	inlineIndices map[uintptr]int
 }
 
+func GetLanguage() *sitter.Language {
+	return tree_sitter_markdown.GetLanguage()
+}
+
 func (t *MarkdownTree) Edit(edit sitter.EditInput) {
 	t.blockTree.Edit(edit)
 	for _, tree := range t.inlineTrees {
