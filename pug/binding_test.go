@@ -14,5 +14,5 @@ func TestGrammar(t *testing.T) {
 
 	n, err := sitter.ParseCtx(context.Background(), []byte(`extends layout.pug`), pug.GetLanguage())
 	assert.NoError(err)
-	assert.Equal("(source_file (extends_statement (path)))", n.String())
+	assert.Equal("(source_file (extends (keyword) (filename)))", n.String())
 }
