@@ -461,51 +461,43 @@ func (s *UpdateService) downloadMarkdown(ctx context.Context, g *Grammar) {
 	url := g.ContentURL()
 
 	langs := []string{"tree-sitter-markdown", "tree-sitter-markdown-inline"}
-	for _, lang := range langs {
-		s.makeDir(ctx, fmt.Sprintf("%s/%s", g.Language, lang))
-		downloadFileURL := getMarkdownURL(url, g.Reference, lang, "parser.c")
+	for _, mdLang := range langs {
+		s.makeDir(ctx, fmt.Sprintf("%s/%s", g.Language, mdLang))
+		s.makeDir(ctx, fmt.Sprintf("%s/%s/tree_sitter", g.Language, mdLang))
 
-		s.downloadFile(
-			ctx,
-			downloadFileURL,
-			fmt.Sprintf("%s/%s/parser.c", g.Language, lang),
-			nil,
-		)
+		srcFiles := []string{"tree_sitter/parser.h", "tree_sitter/alloc.h", "tree_sitter/array.h", "parser.c", "scanner.c"}
 
-		s.downloadFile(
-			ctx,
-			getMarkdownURL(url, g.Reference, lang, "scanner.c"),
-			fmt.Sprintf("%s/%s/scanner.c", g.Language, lang),
-			nil,
-		)
+		for _, srcFile := range srcFiles {
+			srcFileURL := fmt.Sprintf(
+				"%s/refs/tags/%s/%s/src/%s",
+				url,
+				g.Reference,
+				mdLang,
+				srcFile,
+			)
 
-		for _, f := range g.Files {
-			fmt.Println("files filepath:", getMarkdownURL(url, g.Reference, lang, f))
+			srcFilepath := fmt.Sprintf("%s/%s/%s", g.Language, mdLang, srcFile)
+
 			s.downloadFile(
 				ctx,
-				getMarkdownURL(url, g.Reference, lang, f),
-				fmt.Sprintf("%s/%s/%s", g.Language, lang, f),
+				srcFileURL,
+				srcFilepath,
 				map[string]string{
 					`"tree_sitter/parser.h"`: `"parser.h"`,
 				},
 			)
+
+			if srcFile == "tree_sitter/parser.h" {
+				fmt.Println("downloading parser.h")
+				s.downloadFile(
+					ctx,
+					srcFileURL,
+					fmt.Sprintf("%s/%s/parser.h", g.Language, mdLang),
+					nil,
+				)
+			}
 		}
 	}
-}
-
-func getMarkdownURL(url string, tag string, lang string, filename string) string {
-	//
-	// https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/refs/tags/v0.3.2/tree-sitter-markdown/src/parser.h
-	//
-	// Good URL:
-	// https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/refs/tags/v0.3.2/tree-sitter-markdown/src/parser.c
-	return fmt.Sprintf(
-		"%s/refs/tags/%s/%s/src/%s",
-		url,
-		tag,
-		lang,
-		filename,
-	)
 }
 
 // for yaml grammar scanner.cc includes schema.generated.cc file
