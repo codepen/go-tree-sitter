@@ -97,15 +97,15 @@
   },
   {
     "language": "html",
-    "url": "https://github.com/tree-sitter/tree-sitter-html",
+    "url": "https://github.com/codepen/tree-sitter-html",
     "files": [
       "parser.c",
       "scanner.c",
       "tag.h"
     ],
-    "reference": "v0.23.2",
-    "revision": "5a5ca8551a179998360b4a4ca2c0f366a35acc03",
-    "updateBasedOn": "tag"
+    "reference": "master",
+    "revision": "faa97de74cbfe8290afda18accc09a382b192502",
+    "updateBasedOn": "commit"
   },
   {
     "language": "java",
