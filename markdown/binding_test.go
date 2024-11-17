@@ -4,9 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/smacker/go-tree-sitter/markdown"
+	"github.com/codepen/go-tree-sitter/markdown"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMarkdownLanguage(t *testing.T) {
+	assert := assert.New(t)
+
+	language := markdown.GetLanguage()
+	assert.NotNil(language)
+}
 
 func TestMarkdown(t *testing.T) {
 	assert := assert.New(t)

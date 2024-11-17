@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -43,6 +44,35 @@ func (g *Grammar) ContentURL() string {
 	return fmt.Sprintf(
 		"https://raw.githubusercontent.com/%s",
 		strings.TrimPrefix(g.URL, "https://github.com/"),
+	)
+}
+
+func (g *Grammar) BuildDownloadURL(srcFilepath string) string {
+	// Example: https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/refs/tags/v0.3.2/tree-sitter-markdown/src/parser.c
+	if g.UpdatedBasedOn == "tag" {
+		if g.Reference == "" {
+			log.Fatal("Tag is not defined for tag based URL: " + g.URL)
+		}
+
+		return fmt.Sprintf(
+			"%s/refs/tags/%s/%s",
+			g.ContentURL(),
+			g.Reference,
+			srcFilepath,
+		)
+	}
+
+	if g.Revision == "" {
+		log.Fatal("Revision is not defined for commit based URL: " + g.URL)
+	}
+
+	// Commit based URL:
+	// Example: https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/5cdc549ab8f461aff876c5be9741027189299cec/tree-sitter-markdown/src/parser.c
+	return fmt.Sprintf(
+		"%s/%s/%s",
+		g.ContentURL(),
+		g.Revision,
+		srcFilepath,
 	)
 }
 
@@ -193,8 +223,13 @@ func (s *UpdateService) Update(ctx context.Context, language string, force bool)
 			logger.Warn("re-downloading up-to-date grammar")
 		}
 	} else {
-		grammar.Reference = v.Reference
-		grammar.Revision = v.Revision
+		// Check to ensure revision and Reference are not empty
+		if v.Revision != "" {
+			grammar.Revision = v.Revision
+		}
+		if v.Revision != "" {
+			grammar.Reference = v.Reference
+		}
 	}
 
 	s.downloadGrammar(ctx, grammar)
@@ -456,32 +491,68 @@ func (s *UpdateService) downloadTypescript(ctx context.Context, g *Grammar) {
 	}
 }
 
+var (
+	markdownSubLangs         = []string{"tree-sitter-markdown", "tree-sitter-markdown-inline"}
+	markdownStringReplaceMap = map[string]string{
+		`"tree_sitter/alloc.h"`:  `"alloc.h"`,
+		`"tree_sitter/array.h"`:  `"array.h"`,
+		`"tree_sitter/parser.h"`: `"parser.h"`,
+	}
+	markdownSrcFiles = []string{
+		"tree_sitter/alloc.h",
+		"tree_sitter/array.h",
+		"tree_sitter/parser.h",
+		"parser.c",
+		"scanner.c",
+	}
+)
+
 // markdown is special as it contains 2 different grammars
 func (s *UpdateService) downloadMarkdown(ctx context.Context, g *Grammar) {
-	url := g.ContentURL()
+	for _, mdLang := range markdownSubLangs {
+		// 1. Create directory
+		s.makeDir(ctx, fmt.Sprintf("%s/%s", g.Language, mdLang))
 
-	langs := []string{"tree-sitter-markdown", "tree-sitter-markdown-inline"}
-	for _, lang := range langs {
-		s.makeDir(ctx, fmt.Sprintf("%s/%s", g.Language, lang))
-
-		s.downloadFile(
-			ctx,
-			fmt.Sprintf("%s/%s/%s/src/tree_sitter/parser.h", url, g.Revision, lang),
-			fmt.Sprintf("%s/%s/parser.h", g.Language, lang),
-			nil,
-		)
-
-		for _, f := range g.Files {
+		// 2. Download files
+		for _, srcFile := range markdownSrcFiles {
+			downloadURL := g.BuildDownloadURL(fmt.Sprintf("%s/src/%s", mdLang, srcFile))
 			s.downloadFile(
 				ctx,
-				fmt.Sprintf("%s/%s/%s/src/%s", url, g.Revision, lang, f),
-				fmt.Sprintf("%s/%s/%s", g.Language, lang, f),
-				map[string]string{
-					`"tree_sitter/parser.h"`: `"parser.h"`,
-				},
+				downloadURL,
+				buildMarkdownDownloadPath(g, mdLang, srcFile),
+				markdownStringReplaceMap,
 			)
 		}
 	}
+}
+
+func buildMarkdownDownloadURL(g *Grammar, mdLang string, srcFile string) string {
+	if g.UpdatedBasedOn == "tag" {
+		return fmt.Sprintf(
+			"%s/refs/tags/%s/%s/src/%s",
+			g.ContentURL(),
+			g.Reference,
+			mdLang,
+			srcFile,
+		)
+	}
+
+	// Commit based URL:
+	// /tree-sitter-grammars/tree-sitter-markdown
+	// Example: https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-markdown/5cdc549ab8f461aff876c5be9741027189299cec/tree-sitter-markdown/src/parser.c
+	return fmt.Sprintf(
+		"%s/%s/%s/src/%s",
+		g.ContentURL(),
+		g.Revision,
+		mdLang,
+		srcFile,
+	)
+}
+
+func buildMarkdownDownloadPath(g *Grammar, mdLang string, srcFile string) string {
+	// Always remove "tree_sitter/" from the path and download to the sub language folder
+	srcFile = strings.ReplaceAll(srcFile, "tree_sitter/", "")
+	return fmt.Sprintf("%s/%s/%s", g.Language, mdLang, srcFile)
 }
 
 // for yaml grammar scanner.cc includes schema.generated.cc file

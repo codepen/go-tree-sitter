@@ -1,4 +1,4 @@
-package groovy 
+package groovy
 
 //#include "parser.h"
 //TSLanguage *tree_sitter_groovy();
@@ -6,7 +6,7 @@ import "C"
 import (
 	"unsafe"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	sitter "github.com/codepen/go-tree-sitter"
 )
 
 func GetLanguage() *sitter.Language {

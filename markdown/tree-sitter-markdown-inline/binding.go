@@ -3,10 +3,11 @@ package tree_sitter_markdown_inline
 //#include "parser.h"
 //TSLanguage *tree_sitter_markdown_inline();
 import "C"
+
 import (
 	"unsafe"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	sitter "github.com/codepen/go-tree-sitter"
 )
 
 func GetLanguage() *sitter.Language {

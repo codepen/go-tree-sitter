@@ -1,7 +1,6 @@
 #define _POSIX_C_SOURCE 200112L
 
 #include <time.h>
-#include <assert.h>
 #include <stdio.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -21,6 +20,7 @@
 #include "./stack.h"
 #include "./subtree.h"
 #include "./tree.h"
+#include "./ts_assert.h"
 #include "./wasm_store.h"
 
 #define LOG(...)                                                                            \
@@ -33,7 +33,11 @@
   if (self->lexer.logger.log || self->dot_graph_file) {       \
     char *buf = self->lexer.debug_buffer;                     \
     const char *symbol = symbol_name;                         \
-    int off = sprintf(buf, "lexed_lookahead sym:");           \
+    int off = snprintf(                                       \
+      buf,                                                    \
+      TREE_SITTER_SERIALIZATION_BUFFER_SIZE,                  \
+      "lexed_lookahead sym:"                                  \
+    );                                                        \
     for (                                                     \
       int i = 0;                                              \
       symbol[i] != '\0'                                       \
@@ -79,7 +83,7 @@ static const unsigned MAX_VERSION_COUNT = 6;
 static const unsigned MAX_VERSION_COUNT_OVERFLOW = 4;
 static const unsigned MAX_SUMMARY_DEPTH = 16;
 static const unsigned MAX_COST_DIFFERENCE = 16 * ERROR_COST_PER_SKIPPED_TREE;
-static const unsigned OP_COUNT_PER_TIMEOUT_CHECK = 100;
+static const unsigned OP_COUNT_PER_PARSER_TIMEOUT_CHECK = 100;
 
 typedef struct {
   Subtree token;
@@ -397,10 +401,12 @@ static unsigned ts_parser__external_scanner_serialize(
       self->lexer.debug_buffer
     );
   } else {
-    return self->language->external_scanner.serialize(
+    uint32_t length = self->language->external_scanner.serialize(
       self->external_scanner_payload,
       self->lexer.debug_buffer
     );
+    ts_assert(length <= TREE_SITTER_SERIALIZATION_BUFFER_SIZE);
+    return length;
   }
 }
 
@@ -1035,7 +1041,7 @@ static void ts_parser__accept(
   StackVersion version,
   Subtree lookahead
 ) {
-  assert(ts_subtree_is_eof(lookahead));
+  ts_assert(ts_subtree_is_eof(lookahead));
   ts_stack_push(self->stack, version, lookahead, false, 1);
 
   StackSliceArray pop = ts_stack_pop_all(self->stack, version);
@@ -1046,7 +1052,7 @@ static void ts_parser__accept(
     for (uint32_t j = trees.size - 1; j + 1 > 0; j--) {
       Subtree tree = trees.contents[j];
       if (!ts_subtree_extra(tree)) {
-        assert(!tree.data.is_inline);
+        ts_assert(!tree.data.is_inline);
         uint32_t child_count = ts_subtree_child_count(tree);
         const Subtree *children = ts_subtree_children(tree);
         for (uint32_t k = 0; k < child_count; k++) {
@@ -1064,7 +1070,7 @@ static void ts_parser__accept(
       }
     }
 
-    assert(root.ptr);
+    ts_assert(root.ptr);
     self->accept_count++;
 
     if (self->finished_tree.ptr) {
@@ -1200,7 +1206,7 @@ static bool ts_parser__recover_to_state(
 
     SubtreeArray error_trees = ts_stack_pop_error(self->stack, slice.version);
     if (error_trees.size > 0) {
-      assert(error_trees.size == 1);
+      ts_assert(error_trees.size == 1);
       Subtree error_tree = error_trees.contents[0];
       uint32_t error_child_count = ts_subtree_child_count(error_tree);
       if (error_child_count > 0) {
@@ -1488,8 +1494,7 @@ static void ts_parser__handle_error(
 
   for (unsigned i = previous_version_count; i < version_count; i++) {
     bool did_merge = ts_stack_merge(self->stack, version, previous_version_count);
-    assert(did_merge);
-    (void)did_merge;	//	fix warning/error with clang -Os
+    ts_assert(did_merge);
   }
 
   ts_stack_record_summary(self->stack, version, MAX_SUMMARY_DEPTH);
@@ -1559,7 +1564,7 @@ static bool ts_parser__advance(
 
     // If a cancellation flag or a timeout was provided, then check every
     // time a fixed number of parse actions has been processed.
-    if (++self->operation_count == OP_COUNT_PER_TIMEOUT_CHECK) {
+    if (++self->operation_count == OP_COUNT_PER_PARSER_TIMEOUT_CHECK) {
       self->operation_count = 0;
     }
     if (
@@ -2095,7 +2100,7 @@ TSTree *ts_parser_parse(
     }
   } while (version_count != 0);
 
-  assert(self->finished_tree.ptr);
+  ts_assert(self->finished_tree.ptr);
   ts_subtree_balance(self->finished_tree, &self->tree_pool, self->language);
   LOG("done");
   LOG_TREE(self->finished_tree);
@@ -2138,11 +2143,22 @@ TSTree *ts_parser_parse_string_encoding(
 }
 
 void ts_parser_set_wasm_store(TSParser *self, TSWasmStore *store) {
+  if (self->language && ts_language_is_wasm(self->language)) {
+    // Copy the assigned language into the new store.
+    const TSLanguage *copy = ts_language_copy(self->language);
+    ts_parser_set_language(self, copy);
+    ts_language_delete(copy);
+  }
+
   ts_wasm_store_delete(self->wasm_store);
   self->wasm_store = store;
 }
 
 TSWasmStore *ts_parser_take_wasm_store(TSParser *self) {
+  if (self->language && ts_language_is_wasm(self->language)) {
+    ts_parser_set_language(self, NULL);
+  }
+
   TSWasmStore *result = self->wasm_store;
   self->wasm_store = NULL;
   return result;

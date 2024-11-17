@@ -12,6 +12,8 @@ typedef struct {
   const TSSymbol *alias_sequence;
 } NodeChildIterator;
 
+static inline bool ts_node__is_relevant(TSNode self, bool include_anonymous);
+
 // TSNode - constructors
 
 TSNode ts_node_new(
@@ -304,21 +306,35 @@ static inline TSNode ts_node__first_child_for_byte(
   TSNode node = self;
   bool did_descend = true;
 
+  NodeChildIterator last_iterator;
+  bool has_last_iterator = false;
+
   while (did_descend) {
     did_descend = false;
 
     TSNode child;
     NodeChildIterator iterator = ts_node_iterate_children(&node);
+  loop:
     while (ts_node_child_iterator_next(&iterator, &child)) {
       if (ts_node_end_byte(child) > goal) {
         if (ts_node__is_relevant(child, include_anonymous)) {
           return child;
         } else if (ts_node_child_count(child) > 0) {
+          if (iterator.child_index < ts_subtree_child_count(ts_node__subtree(child))) {
+            last_iterator = iterator;
+            has_last_iterator = true;
+          }
           did_descend = true;
           node = child;
           break;
         }
       }
+    }
+
+    if (!did_descend && has_last_iterator) {
+      iterator = last_iterator;
+      has_last_iterator = false;
+      goto loop;
     }
   }
 
@@ -344,9 +360,13 @@ static inline TSNode ts_node__descendant_for_byte_range(
       uint32_t node_end = iterator.position.bytes;
 
       // The end of this node must extend far enough forward to touch
-      // the end of the range and exceed the start of the range.
+      // the end of the range
       if (node_end < range_end) continue;
-      if (node_end <= range_start) continue;
+
+      // ...and exceed the start of the range, unless the node itself is
+      // empty, in which case it must at least be equal to the start of the range.
+      bool is_empty = ts_node_start_byte(child) == node_end;
+      if (is_empty ? node_end < range_start : node_end <= range_start) continue;
 
       // The start of this node must extend far enough backward to
       // touch the start of the range.
@@ -383,9 +403,15 @@ static inline TSNode ts_node__descendant_for_point_range(
       TSPoint node_end = iterator.position.extent;
 
       // The end of this node must extend far enough forward to touch
-      // the end of the range and exceed the start of the range.
+      // the end of the range
       if (point_lt(node_end, range_end)) continue;
-      if (point_lte(node_end, range_start)) continue;
+
+      // ...and exceed the start of the range, unless the node itself is
+      // empty, in which case it must at least be equal to the start of the range.
+      bool is_empty =  point_eq(ts_node_start_point(child), node_end);
+      if (is_empty ? point_lt(node_end, range_start) : point_lte(node_end, range_start)) {
+        continue;
+      }
 
       // The start of this node must extend far enough backward to
       // touch the start of the range.
@@ -505,33 +531,79 @@ TSStateId ts_node_next_parse_state(TSNode self) {
 
 TSNode ts_node_parent(TSNode self) {
   TSNode node = ts_tree_root_node(self.tree);
-  uint32_t end_byte = ts_node_end_byte(self);
   if (node.id == self.id) return ts_node__null();
 
-  TSNode last_visible_node = node;
-  bool did_descend = true;
-  while (did_descend) {
-    did_descend = false;
-
-    TSNode child;
-    NodeChildIterator iterator = ts_node_iterate_children(&node);
-    while (ts_node_child_iterator_next(&iterator, &child)) {
-      if (
-        ts_node_start_byte(child) > ts_node_start_byte(self) ||
-        child.id == self.id
-      ) break;
-      if (iterator.position.bytes >= end_byte && ts_node_child_count(child) > 0) {
-        node = child;
-        if (ts_node__is_relevant(child, true)) {
-          last_visible_node = node;
-        }
-        did_descend = true;
-        break;
-      }
-    }
+  while (true) {
+    TSNode next_node = ts_node_child_containing_descendant(node, self);
+    if (ts_node_is_null(next_node)) break;
+    node = next_node;
   }
 
-  return last_visible_node;
+  return node;
+}
+
+TSNode ts_node_child_containing_descendant(TSNode self, TSNode descendant) {
+  uint32_t start_byte = ts_node_start_byte(descendant);
+  uint32_t end_byte = ts_node_end_byte(descendant);
+  bool is_empty = start_byte == end_byte;
+
+  do {
+    NodeChildIterator iter = ts_node_iterate_children(&self);
+    do {
+      if (
+        !ts_node_child_iterator_next(&iter, &self)
+        || ts_node_start_byte(self) > start_byte
+        || self.id == descendant.id
+      ) {
+        return ts_node__null();
+      }
+
+      // If the descendant is empty, and the end byte is within `self`,
+      // we check whether `self` contains it or not.
+      if (is_empty && iter.position.bytes >= end_byte && ts_node_child_count(self) > 0) {
+        TSNode child = ts_node_child_with_descendant(self, descendant);
+        // If the child is not null, return self if it's relevant, else return the child
+        if (!ts_node_is_null(child)) {
+          return ts_node__is_relevant(self, true) ? self : child;
+        }
+      }
+    } while ((is_empty ? iter.position.bytes <= end_byte : iter.position.bytes < end_byte) || ts_node_child_count(self) == 0);
+  } while (!ts_node__is_relevant(self, true));
+
+  return self;
+}
+
+TSNode ts_node_child_with_descendant(TSNode self, TSNode descendant) {
+  uint32_t start_byte = ts_node_start_byte(descendant);
+  uint32_t end_byte = ts_node_end_byte(descendant);
+  bool is_empty = start_byte == end_byte;
+
+  do {
+    NodeChildIterator iter = ts_node_iterate_children(&self);
+    do {
+      if (
+        !ts_node_child_iterator_next(&iter, &self)
+        || ts_node_start_byte(self) > start_byte
+      ) {
+        return ts_node__null();
+      }
+      if (self.id == descendant.id) {
+        return self;
+      }
+
+      // If the descendant is empty, and the end byte is within `self`,
+      // we check whether `self` contains it or not.
+      if (is_empty && iter.position.bytes >= end_byte && ts_node_child_count(self) > 0) {
+        TSNode child = ts_node_child_with_descendant(self, descendant);
+        // If the child is not null, return self if it's relevant, else return the child
+        if (!ts_node_is_null(child)) {
+          return ts_node__is_relevant(self, true) ? self : child;
+        }
+      }
+    } while ((is_empty ? iter.position.bytes <= end_byte : iter.position.bytes < end_byte) || ts_node_child_count(self) == 0);
+  } while (!ts_node__is_relevant(self, true));
+
+  return self;
 }
 
 TSNode ts_node_child(TSNode self, uint32_t child_index) {
@@ -644,6 +716,9 @@ const char *ts_node_field_name_for_child(TSNode self, uint32_t child_index) {
     while (ts_node_child_iterator_next(&iterator, &child)) {
       if (ts_node__is_relevant(child, true)) {
         if (index == child_index) {
+          if (ts_node_is_extra(child)) {
+            return NULL;
+          }
           const char *field_name = ts_node__field_name_from_language(result, iterator.structural_child_index - 1);
           if (field_name) return field_name;
           return inherited_field_name;
@@ -659,6 +734,48 @@ const char *ts_node_field_name_for_child(TSNode self, uint32_t child_index) {
           did_descend = true;
           result = child;
           child_index = grandchild_index;
+          break;
+        }
+        index += grandchild_count;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+const char *ts_node_field_name_for_named_child(TSNode self, uint32_t named_child_index) {
+  TSNode result = self;
+  bool did_descend = true;
+  const char *inherited_field_name = NULL;
+
+  while (did_descend) {
+    did_descend = false;
+
+    TSNode child;
+    uint32_t index = 0;
+    NodeChildIterator iterator = ts_node_iterate_children(&result);
+    while (ts_node_child_iterator_next(&iterator, &child)) {
+      if (ts_node__is_relevant(child, false)) {
+        if (index == named_child_index) {
+          if (ts_node_is_extra(child)) {
+            return NULL;
+          }
+          const char *field_name = ts_node__field_name_from_language(result, iterator.structural_child_index - 1);
+          if (field_name) return field_name;
+          return inherited_field_name;
+        }
+        index++;
+      } else {
+        uint32_t named_grandchild_index = named_child_index - index;
+        uint32_t grandchild_count = ts_node__relevant_child_count(child, false);
+        if (named_grandchild_index < grandchild_count) {
+          const char *field_name = ts_node__field_name_from_language(result, iterator.structural_child_index - 1);
+          if (field_name) inherited_field_name = field_name;
+
+          did_descend = true;
+          result = child;
+          named_child_index = named_grandchild_index;
           break;
         }
         index += grandchild_count;

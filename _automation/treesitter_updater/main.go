@@ -16,8 +16,10 @@ import (
 )
 
 // Constants for the Tree Sitter version and download URL
-const sitterVersion = "0.22.5"
-const sitterURL = "https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v" + sitterVersion + ".tar.gz"
+const (
+	sitterVersion = "0.24.4"
+	sitterURL     = "https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v" + sitterVersion + ".tar.gz"
+)
 
 func main() {
 	// Get the current working directory
@@ -125,7 +127,7 @@ func copyFile(src, dst string) error {
 	}
 
 	// Write the file to destination
-	err = ioutil.WriteFile(dst, input, 0644)
+	err = ioutil.WriteFile(dst, input, 0o644)
 	if err != nil {
 		return err
 	}
@@ -196,7 +198,7 @@ func downloadAndExtractSitter(url, version string) error {
 		// Create directories and files as needed
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, 0755); err != nil {
+			if err := os.MkdirAll(target, 0o755); err != nil {
 				return err
 			}
 		case tar.TypeReg:
@@ -230,7 +232,6 @@ func cleanup(path string) {
 		}
 		return nil
 	})
-
 	if err != nil {
 		// Handle the error
 	}
