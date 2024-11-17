@@ -3,15 +3,19 @@ package markdown
 import (
 	"context"
 
-	sitter "github.com/smacker/go-tree-sitter"
-	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
-	tree_sitter_markdown_inline "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown-inline"
+	sitter "github.com/codepen/go-tree-sitter"
+	tree_sitter_markdown "github.com/codepen/go-tree-sitter/markdown/tree-sitter-markdown"
+	tree_sitter_markdown_inline "github.com/codepen/go-tree-sitter/markdown/tree-sitter-markdown-inline"
 )
 
 type MarkdownTree struct {
 	blockTree     *sitter.Tree
 	inlineTrees   []*sitter.Tree
 	inlineIndices map[uintptr]int
+}
+
+func GetLanguage() *sitter.Language {
+	return tree_sitter_markdown.GetLanguage()
 }
 
 func (t *MarkdownTree) Edit(edit sitter.EditInput) {

@@ -95,8 +95,8 @@ import (
 	"context"
 	"fmt"
 
-	sitter "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/javascript"
+	sitter "github.com/codepen/go-tree-sitter"
+	"github.com/codepen/go-tree-sitter/javascript"
 )
 
 parser := sitter.NewParser()
@@ -129,7 +129,7 @@ This repository provides grammars for many common languages out of the box.
 
 But if you need support for any other language you can keep it inside your own project or publish it as a separate repository to share with the community.
 
-See explanation on how to create a grammar for go-tree-sitter [here](https://github.com/smacker/go-tree-sitter/issues/57).
+See explanation on how to create a grammar for go-tree-sitter [here](https://github.com/codepen/go-tree-sitter/issues/57).
 
 Known external grammars:
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	sitter "github.com/smacker/go-tree-sitter"
-	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
+	sitter "github.com/codepen/go-tree-sitter"
+	tree_sitter_markdown "github.com/codepen/go-tree-sitter/markdown/tree-sitter-markdown"
 	"github.com/stretchr/testify/assert"
 )
 

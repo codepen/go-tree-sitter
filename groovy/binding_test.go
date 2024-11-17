@@ -4,15 +4,15 @@ import (
 	"context"
 	"testing"
 
-	sitter "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/groovy"
+	sitter "github.com/codepen/go-tree-sitter"
+	"github.com/codepen/go-tree-sitter/groovy"
 	"github.com/stretchr/testify/assert"
 )
 
 var gradleGroovyCode = `
 plugins {
-    id 'application' 
-    id 'foo' 
+    id 'application'
+    id 'foo'
 }
 `
 
@@ -35,15 +35,15 @@ var testCases = []struct {
 		name: "gradle",
 		input: `
       plugins {
-          id 'application' 
+          id 'application'
       }
 
       repositories {
-          mavenCentral() 
+          mavenCentral()
       }
 
       application {
-          mainClass = 'example.App' 
+          mainClass = 'example.App'
       }
       `,
 		expected: "(source_file (juxt_function_call function: (identifier) args: (argument_list (closure (juxt_function_call function: (identifier) args: (argument_list (string (string_content))))))) (juxt_function_call function: (identifier) args: (argument_list (closure (function_call function: (identifier) args: (argument_list))))) (juxt_function_call function: (identifier) args: (argument_list (closure (assignment (identifier) (string (string_content)))))))",

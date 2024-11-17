@@ -1,6 +1,7 @@
 #include "api.h"
 #include "./alloc.h"
 #include "./array.h"
+#include "./clock.h"
 #include "./language.h"
 #include "./point.h"
 #include "./tree_cursor.h"
@@ -146,6 +147,7 @@ typedef struct {
   Slice steps;
   Slice predicate_steps;
   uint32_t start_byte;
+  uint32_t end_byte;
   bool is_non_local;
 } QueryPattern;
 
@@ -311,6 +313,9 @@ struct TSQueryCursor {
   TSPoint start_point;
   TSPoint end_point;
   uint32_t next_state_id;
+  TSClock end_clock;
+  TSDuration timeout_duration;
+  unsigned operation_count;
   bool on_visible_node;
   bool ascending;
   bool halted;
@@ -321,6 +326,7 @@ static const TSQueryError PARENT_DONE = -1;
 static const uint16_t PATTERN_DONE_MARKER = UINT16_MAX;
 static const uint16_t NONE = UINT16_MAX;
 static const TSSymbol WILDCARD_SYMBOL = 0;
+static const unsigned OP_COUNT_PER_QUERY_TIMEOUT_CHECK = 100;
 
 /**********
  * Stream
@@ -436,7 +442,7 @@ static const CaptureList *capture_list_pool_get(const CaptureListPool *self, uin
 }
 
 static CaptureList *capture_list_pool_get_mut(CaptureListPool *self, uint16_t id) {
-  assert(id < self->list.size);
+  ts_assert(id < self->list.size);
   return &self->list.contents[id];
 }
 
@@ -1689,7 +1695,7 @@ static bool ts_query__analyze_patterns(TSQuery *self, unsigned *error_offset) {
       unsigned first_child_step_index = parent_step_index + 1;
       uint32_t j, child_exists;
       array_search_sorted_by(&self->step_offsets, .step_index, first_child_step_index, &j, &child_exists);
-      assert(child_exists);
+      ts_assert(child_exists);
       *error_offset = self->step_offsets.contents[j].byte_offset;
       all_patterns_are_valid = false;
       break;
@@ -1748,7 +1754,7 @@ static bool ts_query__analyze_patterns(TSQuery *self, unsigned *error_offset) {
     // If this pattern cannot match, store the pattern index so that it can be
     // returned to the caller.
     if (analysis.finished_parent_symbols.size == 0) {
-      assert(analysis.final_step_indices.size > 0);
+      ts_assert(analysis.final_step_indices.size > 0);
       uint16_t impossible_step_index = *array_back(&analysis.final_step_indices);
       uint32_t j, impossible_exists;
       array_search_sorted_by(&self->step_offsets, .step_index, impossible_step_index, &j, &impossible_exists);
@@ -2715,6 +2721,7 @@ TSQuery *ts_query_new(
     QueryPattern *pattern = array_back(&self->patterns);
     pattern->steps.length = self->steps.size - start_step_index;
     pattern->predicate_steps.length = self->predicate_steps.size - start_predicate_step_index;
+    pattern->end_byte = stream_offset(&stream);
 
     // If any pattern could not be parsed, then report the error information
     // and terminate.
@@ -2740,7 +2747,7 @@ TSQuery *ts_query_new(
       // there is a parent node, and capture it if necessary.
       if (step->symbol == WILDCARD_SYMBOL && step->depth == 0 && !step->field) {
         QueryStep *second_step = &self->steps.contents[start_step_index + 1];
-        if (second_step->symbol != WILDCARD_SYMBOL && second_step->depth == 1) {
+        if (second_step->symbol != WILDCARD_SYMBOL && second_step->depth == 1 && !second_step->is_immediate) {
           wildcard_root_alternative_index = step->alternative_index;
           start_step_index += 1;
           step = second_step;
@@ -2873,6 +2880,13 @@ uint32_t ts_query_start_byte_for_pattern(
   return self->patterns.contents[pattern_index].start_byte;
 }
 
+uint32_t ts_query_end_byte_for_pattern(
+  const TSQuery *self,
+  uint32_t pattern_index
+) {
+  return self->patterns.contents[pattern_index].end_byte;
+}
+
 bool ts_query_is_pattern_rooted(
   const TSQuery *self,
   uint32_t pattern_index
@@ -2918,7 +2932,7 @@ bool ts_query__step_is_fallible(
   const TSQuery *self,
   uint16_t step_index
 ) {
-  assert((uint32_t)step_index + 1 < self->steps.size);
+  ts_assert((uint32_t)step_index + 1 < self->steps.size);
   QueryStep *step = &self->steps.contents[step_index];
   QueryStep *next_step = &self->steps.contents[step_index + 1];
   return (
@@ -2977,6 +2991,9 @@ TSQueryCursor *ts_query_cursor_new(void) {
     .start_point = {0, 0},
     .end_point = POINT_MAX,
     .max_start_depth = UINT32_MAX,
+    .timeout_duration = 0,
+    .end_clock = clock_null(),
+    .operation_count = 0,
   };
   array_reserve(&self->states, 8);
   array_reserve(&self->finished_states, 8);
@@ -3003,6 +3020,14 @@ void ts_query_cursor_set_match_limit(TSQueryCursor *self, uint32_t limit) {
   self->capture_list_pool.max_capture_list_count = limit;
 }
 
+uint64_t ts_query_cursor_timeout_micros(const TSQueryCursor *self) {
+  return duration_to_micros(self->timeout_duration);
+}
+
+void ts_query_cursor_set_timeout_micros(TSQueryCursor *self, uint64_t timeout_micros) {
+  self->timeout_duration = duration_from_micros(timeout_micros);
+}
+
 #ifdef DEBUG_EXECUTE_QUERY
 #define LOG(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -3014,7 +3039,7 @@ void ts_query_cursor_exec(
   const TSQuery *query,
   TSNode node
 ) {
-  if  (query) {
+  if (query) {
     LOG("query steps:\n");
     for (unsigned i = 0; i < query->steps.size; i++) {
       QueryStep *step = &query->steps.contents[i];
@@ -3051,6 +3076,12 @@ void ts_query_cursor_exec(
   self->halted = false;
   self->query = query;
   self->did_exceed_match_limit = false;
+  self->operation_count = 0;
+  if (self->timeout_duration) {
+    self->end_clock = clock_after(clock_now(), self->timeout_duration);
+  } else {
+    self->end_clock = clock_null();
+  }
 }
 
 void ts_query_cursor_set_byte_range(
@@ -3447,7 +3478,19 @@ static inline bool ts_query_cursor__advance(
       }
     }
 
-    if (did_match || self->halted) return did_match;
+    if (++self->operation_count == OP_COUNT_PER_QUERY_TIMEOUT_CHECK) {
+      self->operation_count = 0;
+    }
+    if (
+      did_match ||
+      self->halted ||
+      (
+        self->operation_count == 0 &&
+        !clock_is_null(self->end_clock) && clock_is_gt(clock_now(), self->end_clock)
+      )
+    ) {
+      return did_match;
+    }
 
     // Exit the current node.
     if (self->ascending) {
@@ -3532,6 +3575,13 @@ static inline bool ts_query_cursor__advance(
       // Get the properties of the current node.
       TSNode node = ts_tree_cursor_current_node(&self->cursor);
       TSNode parent_node = ts_tree_cursor_parent_node(&self->cursor);
+
+      uint32_t start_byte = ts_node_start_byte(node);
+      uint32_t end_byte = ts_node_end_byte(node);
+      TSPoint start_point = ts_node_start_point(node);
+      TSPoint end_point = ts_node_end_point(node);
+      bool is_empty = start_byte == end_byte;
+
       bool parent_precedes_range = !ts_node_is_null(parent_node) && (
         ts_node_end_byte(parent_node) <= self->start_byte ||
         point_lte(ts_node_end_point(parent_node), self->start_point)
@@ -3540,13 +3590,16 @@ static inline bool ts_query_cursor__advance(
         ts_node_start_byte(parent_node) >= self->end_byte ||
         point_gte(ts_node_start_point(parent_node), self->end_point)
       );
-      bool node_precedes_range = parent_precedes_range || (
-        ts_node_end_byte(node) <= self->start_byte ||
-        point_lte(ts_node_end_point(node), self->start_point)
-      );
+      bool node_precedes_range =
+        parent_precedes_range ||
+        end_byte < self->start_byte ||
+        point_lt(end_point, self->start_point) ||
+        (!is_empty && end_byte == self->start_byte) ||
+        (!is_empty && point_eq(end_point, self->start_point));
+
       bool node_follows_range = parent_follows_range || (
-        ts_node_start_byte(node) >= self->end_byte ||
-        point_gte(ts_node_start_point(node), self->end_point)
+        start_byte >= self->end_byte ||
+        point_gte(start_point, self->end_point)
       );
       bool parent_intersects_range = !parent_precedes_range && !parent_follows_range;
       bool node_intersects_range = !node_precedes_range && !node_follows_range;
@@ -4011,7 +4064,7 @@ bool ts_query_cursor_next_capture(
     uint32_t first_unfinished_pattern_index;
     uint32_t first_unfinished_state_index;
     bool first_unfinished_state_is_definite = false;
-    ts_query_cursor__first_in_progress_capture(
+    bool found_unfinished_state = ts_query_cursor__first_in_progress_capture(
       self,
       &first_unfinished_state_index,
       &first_unfinished_capture_byte,
@@ -4101,7 +4154,7 @@ bool ts_query_cursor_next_capture(
       return true;
     }
 
-    if (capture_list_pool_is_empty(&self->capture_list_pool)) {
+    if (capture_list_pool_is_empty(&self->capture_list_pool) && found_unfinished_state) {
       LOG(
         "  abandon state. index:%u, pattern:%u, offset:%u.\n",
         first_unfinished_state_index,
