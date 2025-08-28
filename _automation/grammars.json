@@ -118,6 +118,19 @@
     "updateBasedOn": "tag"
   },
   {
+    "language": "nunjucks",
+    "url": "https://github.com/mickeynp/tree-sitter-jinja2",
+    "files": [
+      "alloc.h",
+      "parser.c",
+      "parser.h",
+      "scanner.c"
+    ],
+    "reference": "main",
+    "revision": "d9a9bf0d9cca79c6798308648d4f7040b4ca95c6",
+    "updateBasedOn": "commit"
+  },
+  {
     "language": "javascript",
     "url": "https://github.com/tree-sitter/tree-sitter-javascript",
     "files": [
