@@ -142,6 +142,20 @@
     "updateBasedOn": "tag"
   },
   {
+    "language": "liquid",
+    "url": "https://github.com/hankthetank27/tree-sitter-liquid",
+    "files": [
+      "alloc.h",
+      "array.h",
+      "parser.c",
+      "parser.h",
+      "scanner.c"
+    ],
+    "reference": "main",
+    "revision": "4f1b43625924c11ec99d79a0f2ddbb94c4e393d7",
+    "updateBasedOn": "commit"
+  },
+  {
     "language": "kotlin",
     "url": "https://github.com/fwcd/tree-sitter-kotlin",
     "files": [
